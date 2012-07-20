@@ -10,7 +10,6 @@
 namespace yago
 {
 
-typedef float sample;
 typedef double time;
 
 constexpr float twopi = 6.28318531f;
@@ -23,7 +22,7 @@ public:
     virtual void signal(const yago::time t, const int sample_rate, std::vector<T>& buffer) {}
 };
 
-class Oscillator : SignalElement<yago::sample>
+class Oscillator : SignalElement<float>
 {
     typedef std::function<float (float)> wave_func;
     typedef std::function<float (yago::time)> freq_func;
@@ -33,13 +32,13 @@ private:
     float _phase;
     wave_func _wave;
 public:
-    static yago::sample sine_wave(float phase)
+    static float sine_wave(float phase)
     {
         return sin(twopi * phase);
     }
     Oscillator(const float frequency, const float phase = 0.0f, const wave_func wave = sine_wave) : _frequency(frequency), _freq_f(nullptr), _phase(phase - (int) phase), _wave(wave) {}
     Oscillator(const freq_func frequency, const float phase = 0.0f, const wave_func wave = sine_wave) : _frequency(0.0), _freq_f(frequency), _phase(phase - (int) phase), _wave(wave) {}
-    void signal(const yago::time t, const int sample_rate, std::vector<yago::sample>& buffer);
+    void signal(const yago::time t, const int sample_rate, std::vector<float>& buffer);
     void set_frequency(const float frequency)
     {
         _frequency = frequency;
@@ -51,14 +50,14 @@ public:
     }
 };
 
-class Amplifier : SignalElement<yago::sample>
+class Amplifier : SignalElement<float>
 {
 private:
     float _rate;
     float _limit;
 public:
     Amplifier(const float rate, const float limit) : _rate(rate), _limit(limit) {}
-    void signal(const yago::time t, const int sample_rate, std::vector<sample>& buffer);
+    void signal(const yago::time t, const int sample_rate, std::vector<float>& buffer);
 };
 
 }
