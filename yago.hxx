@@ -1,66 +1,71 @@
-#ifndef YAGO_H
-#define YAGO_H
+#ifndef _YAGO_HXX
+#define _YAGO_HXX
 
 #include <cmath>
 #include <functional>
-#include <list>
-#include <vector>
+#include <limits>
 #include <utility>
 
 namespace yago
 {
 
 typedef double time;
-
 constexpr float twopi = 6.28318531f;
 
-template <typename T>
-class SignalElement
-{
-public:
-    virtual ~SignalElement() {}
-    virtual void signal(const yago::time t, const int sample_rate, std::vector<T>& buffer) {}
-};
+}
 
-class Oscillator : SignalElement<float>
-{
-    typedef std::function<float (float)> wave_func;
-    typedef std::function<float (yago::time)> freq_func;
-private:
-    float _frequency;
-    freq_func _freq_f;
-    float _phase;
-    wave_func _wave;
-public:
-    static float sine_wave(float phase)
-    {
-        return sin(twopi * phase);
-    }
-    Oscillator(const float frequency, const float phase = 0.0f, const wave_func wave = sine_wave) : _frequency(frequency), _freq_f(nullptr), _phase(phase - (int) phase), _wave(wave) {}
-    Oscillator(const freq_func frequency, const float phase = 0.0f, const wave_func wave = sine_wave) : _frequency(0.0), _freq_f(frequency), _phase(phase - (int) phase), _wave(wave) {}
-    void signal(const yago::time t, const int sample_rate, std::vector<float>& buffer);
-    void set_frequency(const float frequency)
-    {
-        _frequency = frequency;
-        _freq_f = nullptr;
-    }
-    void set_frequency(const freq_func frequency)
-    {
-        _freq_f = frequency;
-    }
-};
+#include <yago/sigelem.hxx>
 
-class Amplifier : SignalElement<float>
+#include <yago/functional.hxx>
+
+#include <yago/envelop.hxx>
+#include <yago/oscillator.hxx>
+
+namespace yago
+{
+
+template <typename Range>
+class Distortion : SignalElement<Range>
 {
 private:
-    float _rate;
+    float _gain;
     float _limit;
 public:
-    Amplifier(const float rate, const float limit) : _rate(rate), _limit(limit) {}
-    void signal(const yago::time t, const int sample_rate, std::vector<float>& buffer);
+    Distortion(float gain, float limit) : _gain(gain), _limit(limit) {}
+    void signal(const yago::time t, const float sample_rate, Range& buffer)
+    {
+        for (float& sample : buffer)
+        {
+            sample *= _gain;
+            if (sample > _limit) sample = _limit;
+            else if (sample < -_limit) sample = -_limit;
+        }
+    }
+};
+
+template <typename Range>
+class OverDrive : SignalElement<Range>
+{
+private:
+    float _gain;
+    float _limit;
+public:
+    OverDrive(float gain, float limit) : _gain(gain), _limit(limit) {}
+    void signal(const yago::time t, const float sample_rate, Range& buffer)
+    {
+        float rlimit = 1.0f / _limit;
+        for (float& sample : buffer)
+        {
+            if (sample > 0.0f)
+                sample = _limit * tanh(rlimit * _gain * sample);
+            else
+                sample = _gain * sample;
+        }
+    }
 };
 
 }
+
 /* namespace yago */
 
 #endif
