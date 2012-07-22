@@ -34,7 +34,7 @@ private:
         return sample * _velocity * envelop;
     }
 public:
-    Envelop(float attack, float decay, float sustain, float release, float velocity = 1.0f, float note_off_t = std::numeric_limits<float>::infinity()) : FunctionalElement<Range>([this](yago::time t, float s){ return _envelop(t,s); }), _attack(attack), _decay(decay), _sustain(sustain), _release(release), _velocity(velocity), _note_off_t(note_off_t) {}
+    Envelop(float attack, float decay, float sustain, float release, float velocity = 1.0f, float note_off_t = std::numeric_limits<float>::infinity()) : FunctionalElement<Range>([this](yago::time t, float s){ return this->_envelop(t,s); }), _attack(attack), _decay(decay), _sustain(sustain), _release(release), _velocity(velocity), _note_off_t(note_off_t) {}
     void note_off(yago::time t)
     {
         _note_off_t = t;
